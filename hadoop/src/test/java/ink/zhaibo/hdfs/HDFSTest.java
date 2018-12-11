@@ -19,11 +19,29 @@ import java.net.URI;
  */
 public class HDFSTest {
 
-    public static final String HDFS_PATH = "hdfs://hostName或者公网ip:8020";
+    public static final String HDFS_PATH = "hdfs://bigdata:8020";
 
     FileSystem fileSystem = null;
     Configuration configuration = null;
 
+    @Before
+    public void setUp() throws Exception {
+        System.out.println("HDFSApp.setUp");
+        configuration = new Configuration();
+        //解决远程主机datanode找不到的问题,返回主机名名称，而不是内网地址
+        configuration.set("dfs.client.use.datanode.hostname", "true");
+        configuration.set("fs.defaultFS", HDFS_PATH);
+        configuration.set("user","hadoop");
+        fileSystem = FileSystem.get(configuration);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        configuration = null;
+        fileSystem = null;
+
+        System.out.println("HDFSApp.tearDown");
+    }
 
     /**
      * 创建HDFS目录
@@ -38,8 +56,8 @@ public class HDFSTest {
      */
     @Test
     public void create() throws Exception {
-        FSDataOutputStream output = fileSystem.create(new Path("/hdfsapi/test/b.txt"));
-        output.write("hello hadoop".getBytes());
+        FSDataOutputStream output = fileSystem.create(new Path("/hdfsapi/test/c.txt"));
+        output.write("no hello hadoop111111111111111".getBytes());
         output.flush();
         output.close();
     }
@@ -49,7 +67,7 @@ public class HDFSTest {
      */
     @Test
     public void cat() throws Exception {
-        FSDataInputStream in = fileSystem.open(new Path("/hdfsapi/test/a.txt"));
+        FSDataInputStream in = fileSystem.open(new Path("/hdfsapi/test/c.txt"));
         IOUtils.copyBytes(in, System.out, 1024);
         in.close();
     }
@@ -132,23 +150,5 @@ public class HDFSTest {
     @Test
     public void delete() throws Exception{
         fileSystem.delete(new Path("/"), true);
-    }
-
-
-    @Before
-    public void setUp() throws Exception {
-        System.out.println("HDFSApp.setUp");
-        configuration = new Configuration();
-        //解决远程主机datanode找不到的问题
-        configuration.set("dfs.client.use.datanode.hostname", "true");
-        fileSystem = FileSystem.get(new URI(HDFS_PATH), configuration, "hadoop");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        configuration = null;
-        fileSystem = null;
-
-        System.out.println("HDFSApp.tearDown");
     }
 }
