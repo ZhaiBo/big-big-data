@@ -49,7 +49,7 @@ public class WordCountApp {
                         this.collector.emit(new Values(line));
                     }
 
-//                    FileUtils.moveFile(file, new File(file.getAbsolutePath() + System.currentTimeMillis()));
+                    FileUtils.moveFile(file, new File(file.getAbsolutePath() + System.currentTimeMillis()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -65,7 +65,7 @@ public class WordCountApp {
     /**
      * 分割Spout发送过来的数据
      */
-    private static class SplitBolt extends BaseRichBolt {
+    public static class SplitBolt extends BaseRichBolt {
         private OutputCollector collector;
 
         public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -76,7 +76,7 @@ public class WordCountApp {
             String line = tuple.getStringByField("line");
             String[] words = line.split(" ");
 
-            for(String word : words) {
+            for (String word : words) {
                 this.collector.emit(new Values(word));
             }
         }
@@ -89,35 +89,40 @@ public class WordCountApp {
     /**
      * 汇总
      */
-    private static class CountBolt extends BaseRichBolt {
+    public static class CountBolt extends BaseRichBolt {
 
-        Map<String,Integer> countMap = new HashMap<String, Integer>();
+        Map<String, Integer> countMap = new HashMap<String, Integer>();
+        private OutputCollector collector;
 
         public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+            this.collector = outputCollector;
         }
 
         public void execute(Tuple tuple) {
             // 1）获取每个单词
             String word = tuple.getStringByField("word");
             Integer count = countMap.get(word);
-            if(count == null) {
+            if (count == null) {
                 count = 0;
             }
 
-            count ++;
+            count++;
 
             // 2）对所有单词进行汇总
             countMap.put(word, count);
 
+            this.collector.emit(new Values(word, String.valueOf(count)));
+
             // 3）输出
             System.out.println("~~~~~~~~~~~~~~~~~~~~~~");
-            Set<Map.Entry<String,Integer>> entrySet = countMap.entrySet();
-            for(Map.Entry<String,Integer> entry : entrySet) {
+            Set<Map.Entry<String, Integer>> entrySet = countMap.entrySet();
+            for (Map.Entry<String, Integer> entry : entrySet) {
                 System.out.println(entry);
             }
         }
 
         public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+            outputFieldsDeclarer.declare(new Fields("word", "count"));
         }
     }
 
