@@ -43,7 +43,7 @@ public class KafkaConsumer extends Thread {
         ConsumerIterator<byte[], byte[]> iterator = stream.iterator();
 
         while (iterator.hasNext()) {
-            System.out.println(new String(iterator.next().message()));
+            System.out.println("receive:" + new String(iterator.next().message()));
         }
     }
 }
